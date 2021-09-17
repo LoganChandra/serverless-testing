@@ -1,0 +1,49 @@
+service: serverless-testing
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  region: ap-southeast-1
+  vpc:
+    securityGroupIds:
+      - sg-070ddb18626667b37
+    subnetIds:
+      - subnet-0ee3da1f2c6ef815c
+      - subnet-07de42066e68b40ed
+      - subnet-09e0d868e857045fd
+  environment:
+    DB_HOST: logan-poc-serverless-db.cluster-ctb7pckp3icd.ap-southeast-1.rds.amazonaws.com
+    DB_USER: admin
+    DB_PASSWORD: admin1234
+    DB_NAME: Cinema
+    DB_PORT: 3306
+
+plugins:
+  - serverless-bundle # Package our functions with Webpack
+
+layers:
+  mysql:
+    path: layers
+    description: MYSQL Layer
+    compatibleRuntimes:
+      - nodejs12.x
+      
+package:
+  patterns:
+    - "!node_modules/"
+
+functions:
+  getMovie:
+    handler: tests/getMovie.handler
+    layers:
+      - { Ref: MysqlLambdaLayer }
+    package:
+      patterns:
+        - "!**"
+        - tests/**
+      individually: true 
+    events:
+      - http:
+          path: getMovie
+          method: get
